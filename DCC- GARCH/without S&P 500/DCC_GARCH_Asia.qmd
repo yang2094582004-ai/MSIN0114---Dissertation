@@ -26,6 +26,8 @@ lapply(packages, library, character.only = TRUE)
 
 ## 2. Import Daily Index Price Data
 
+The repository includes a frozen local dataset ending on 2023-08-31. Rendering this document does not download or update market data.
+
 ```{r}
 data_candidates <- c(
   "../../dataset/outputs/daily_prices_all_markets.csv",
@@ -35,7 +37,7 @@ data_candidates <- c(
 data_path <- data_candidates[file.exists(data_candidates)][1]
 
 if (is.na(data_path)) {
-  stop("daily_prices_all_markets.csv was not found. Run cleaning.ipynb first.")
+  stop("The frozen daily_prices_all_markets.csv included with the project was not found.")
 }
 
 daily_prices <- readr::read_csv(data_path)
