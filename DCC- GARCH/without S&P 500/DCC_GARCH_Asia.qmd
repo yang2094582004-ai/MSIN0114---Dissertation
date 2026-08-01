@@ -149,7 +149,7 @@ write.csv(daily_returns, "daily_returns_for_dcc_no_sp500.csv", row.names = FALSE
 
 ```{r}
 # Keep only return variables for DCC-GARCH estimation
-dcc_data <- daily_returns %>%
+dcc_data_no_sp500 <- daily_returns %>%
   select(
     r_Shanghai,
     r_Hang_Seng,
@@ -158,8 +158,8 @@ dcc_data <- daily_returns %>%
     r_STI
   )
 
-head(dcc_data)
-summary(dcc_data)
+head(dcc_data_no_sp500)
+summary(dcc_data_no_sp500)
 ```
 
 ## 7. Specify the DCC-GARCH Model
@@ -168,18 +168,18 @@ The model uses a univariate GARCH(1,1) specification for each market and then es
 
 ```{r}
 # Univariate GARCH(1,1) specification for each market
-uspec <- ugarchspec(
+uspec_no_sp500 <- ugarchspec(
   mean.model = list(armaOrder = c(0, 0), include.mean = TRUE),
   variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
   distribution.model = "norm"
 )
 
 # Apply the same GARCH specification to all return series
-multispec_model <- multispec(replicate(ncol(dcc_data), uspec))
+multispec_model_no_sp500 <- multispec(replicate(ncol(dcc_data_no_sp500), uspec_no_sp500))
 
 # DCC-GARCH(1,1) specification
-dcc_spec <- dccspec(
-  uspec = multispec_model,
+dcc_spec_no_sp500 <- dccspec(
+  uspec = multispec_model_no_sp500,
   dccOrder = c(1, 1),
   distribution = "mvnorm"
 )
@@ -188,22 +188,22 @@ dcc_spec <- dccspec(
 ## 8. Estimate the DCC-GARCH Model
 
 ```{r}
-dcc_fit <- dccfit(
-  dcc_spec,
-  data = dcc_data
+dcc_fit_no_sp500 <- dccfit(
+  dcc_spec_no_sp500,
+  data = dcc_data_no_sp500
 )
 
-dcc_fit
+dcc_fit_no_sp500
 ```
 
 ## 9. Create DCC-GARCH Parameter Table
 
 ```{r}
-dcc_param_table <- as.data.frame(dcc_fit@mfit$matcoef)
+dcc_param_table_no_sp500 <- as.data.frame(dcc_fit_no_sp500@mfit$matcoef)
 
-dcc_param_table$Parameter <- rownames(dcc_param_table)
+dcc_param_table_no_sp500$Parameter <- rownames(dcc_param_table_no_sp500)
 
-colnames(dcc_param_table) <- c(
+colnames(dcc_param_table_no_sp500) <- c(
   "Estimate",
   "Std_Error",
   "t_value",
@@ -211,14 +211,14 @@ colnames(dcc_param_table) <- c(
   "Parameter"
 )
 
-dcc_param_table <- dcc_param_table %>%
+dcc_param_table_no_sp500 <- dcc_param_table_no_sp500 %>%
   select(Parameter, Estimate, Std_Error, t_value, p_value) %>%
   mutate(
     CI_Lower = Estimate - 1.96 * Std_Error,
     CI_Upper = Estimate + 1.96 * Std_Error
   )
 
-dcc_param_gt <- dcc_param_table %>%
+dcc_param_gt_no_sp500 <- dcc_param_table_no_sp500 %>%
   gt() %>%
   tab_header(
     title = "DCC-GARCH Parameter Estimates",
@@ -238,10 +238,10 @@ dcc_param_gt <- dcc_param_table %>%
     decimals = 6
   )
 
-dcc_param_gt
+dcc_param_gt_no_sp500
 
 gtsave(
-  dcc_param_gt,
+  dcc_param_gt_no_sp500,
   filename = "dcc_garch_parameter_estimates_no_sp500.png"
 )
 ```
@@ -250,22 +250,22 @@ gtsave(
 
 ```{r}
 # Extract dynamic correlation array
-dcc_cor <- rcor(dcc_fit)
+dcc_cor_no_sp500 <- rcor(dcc_fit_no_sp500)
 
 # Check dimensions: market x market x time
-dim(dcc_cor)
+dim(dcc_cor_no_sp500)
 ```
 
 ## 11. Average Dynamic Conditional Correlation Matrix
 
 ```{r}
-avg_dcc_cor_matrix <- apply(dcc_cor, c(1, 2), mean, na.rm = TRUE)
+avg_dcc_cor_matrix_no_sp500 <- apply(dcc_cor_no_sp500, c(1, 2), mean, na.rm = TRUE)
 
-colnames(avg_dcc_cor_matrix) <- colnames(dcc_data)
-rownames(avg_dcc_cor_matrix) <- colnames(dcc_data)
+colnames(avg_dcc_cor_matrix_no_sp500) <- colnames(dcc_data_no_sp500)
+rownames(avg_dcc_cor_matrix_no_sp500) <- colnames(dcc_data_no_sp500)
 
 knitr::kable(
-  avg_dcc_cor_matrix,
+  avg_dcc_cor_matrix_no_sp500,
   digits = 4,
   caption = "Average Dynamic Conditional Correlation Matrix without S&P 500"
 )
@@ -296,7 +296,7 @@ make_corr_row <- function(x, pair_name) {
   )
 }
 
-market_names <- colnames(dcc_data)
+market_names <- colnames(dcc_data_no_sp500)
 pair_index <- combn(seq_along(market_names), 2)
 
 pairwise_corr_table <- do.call(
@@ -305,7 +305,7 @@ pairwise_corr_table <- do.call(
     m1 <- pair_index[1, i]
     m2 <- pair_index[2, i]
     pair_name <- paste0("corr(", market_names[m1], ", ", market_names[m2], ")")
-    make_corr_row(dcc_cor[m1, m2, ], pair_name)
+  make_corr_row(dcc_cor_no_sp500[m1, m2, ], pair_name)
   })
 )
 
@@ -349,10 +349,10 @@ This section focuses on the correlations between Shanghai and the other Asian ma
 ```{r}
 dcc_daily <- data.frame(
   Date = daily_returns$Date,
-  corr_SH_Hang_Seng = dcc_cor[1, 2, ],
-  corr_SH_Nikkei = dcc_cor[1, 3, ],
-  corr_SH_KOSPI = dcc_cor[1, 4, ],
-  corr_SH_STI = dcc_cor[1, 5, ]
+  corr_SH_Hang_Seng = dcc_cor_no_sp500[1, 2, ],
+  corr_SH_Nikkei = dcc_cor_no_sp500[1, 3, ],
+  corr_SH_KOSPI = dcc_cor_no_sp500[1, 4, ],
+  corr_SH_STI = dcc_cor_no_sp500[1, 5, ]
 )
 
 head(dcc_daily)
