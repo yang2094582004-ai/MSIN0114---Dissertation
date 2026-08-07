@@ -1,6 +1,6 @@
 ---
 title: "DCC-GARCH without S&P 500"
-format: html
+format: docx
 editor: visual
 ---
 
@@ -468,9 +468,3 @@ ggsave("dcc_shanghai_nikkei_no_sp500.png", plot_sh_nikkei, width = 8, height = 5
 ggsave("dcc_shanghai_kospi_no_sp500.png", plot_sh_kospi, width = 8, height = 5, dpi = 300)
 ggsave("dcc_shanghai_sti_no_sp500.png", plot_sh_sti, width = 8, height = 5, dpi = 300)
 ```
-
-## 19. Suggested Interpretation Notes
-
-The DCC-GARCH results can be interpreted together with the VAR and Granger causality results.
-
-If the average dynamic correlations between Shanghai and the other Asian markets are relatively low, this may support the argument that China's stock market linkages with other Asian markets are weaker than expected. If the correlations increase during crisis periods, such as the Global Financial Crisis or COVID-19 period, this may suggest stronger co-movement during market stress.

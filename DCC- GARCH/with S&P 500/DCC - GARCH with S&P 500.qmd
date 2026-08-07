@@ -1,6 +1,6 @@
 ---
 title: "DCC - GARCH"
-format: html
+format: docx
 editor: visual
 ---
 
